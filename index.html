@@ -74,6 +74,7 @@
       txt.indexOf("["),
       txt.lastIndexOf("]") + 1
     );
+    if (originalArr.length === 0) return (output.value = "");
 
     let arr = originalArr;
     if (shouldReplaceStringIds) {
