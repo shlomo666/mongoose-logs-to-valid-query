@@ -87,7 +87,8 @@
     arr = removeQuotes(arr);
     arr = collapse(arr, MAX_COLLAPSE);
 
-    output.value = "db." + txt.replace(originalArr, arr);
+    output.value =
+      (txt.startsWith("db.") ? "" : "db.") + txt.replace(originalArr, arr);
   }
 
   function format(s) {
