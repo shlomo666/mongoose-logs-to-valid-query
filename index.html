@@ -84,6 +84,10 @@
     map.clear();
 
     const exchanged = s
+      .replace(
+        / \/[^\n]+\/[a-z]+/g,
+        s => ` "${exchange(s.slice(1), "Regexp")}"`
+      )
       .replace(/ (\w{24})/g, (s, id) => ` "${exchange(id, "ObjectId")}"`)
       .replace(
         / \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z/g,
@@ -97,7 +101,7 @@
           .split(`"${v}"`)
           .join(`${v.split("_")[0]}("${k}")`))
     );
-    return stringified;
+    return stringified.replace(/Regexp\("([^\n]+)"\)/g, (s, regex) => regex);
   }
 
   const map = new Map();
