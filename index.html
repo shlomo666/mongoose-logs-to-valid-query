@@ -10,14 +10,18 @@
     onchange="action()"
   /><br />
   <input type="checkbox" name="shouldIds" id="shouldIds" onchange="action()" />
-  <label for="shouldIds">Replace string ids with ObjectId</label><br />
+  <label id="shouldIdsLabel" for="shouldIds"
+    >Replace string ids with ObjectId</label
+  ><br />
   <input
     type="checkbox"
     name="shouldDates"
     id="shouldDates"
     onchange="action()"
   />
-  <label for="shouldDates">Replace string dates with Date</label><br />
+  <label id="shouldDatesLabel" for="shouldDates"
+    >Replace string dates with Date</label
+  ><br />
 </div>
 
 <div>
@@ -50,6 +54,8 @@
   const output = document.getElementById("outputCode");
 
   function action() {
+    markOptionsUsage();
+
     const shouldReplaceStringIds = document.getElementById("shouldIds").checked;
     const shouldReplaceStringDates = document.getElementById("shouldDates")
       .checked;
@@ -154,5 +160,13 @@
       /"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z"/g,
       s => s.slice(1, -1)
     );
+  }
+
+  function markOptionsUsage() {
+    const txt = input.value;
+    document.getElementById("shouldIdsLabel").style.background =
+      replaceStringIds(txt) !== txt ? "gainsboro" : "none";
+    document.getElementById("shouldDatesLabel").style.background =
+      replaceStringDates(txt) !== txt ? "gainsboro" : "none";
   }
 </script>
