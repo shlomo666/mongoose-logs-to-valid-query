@@ -1,46 +1,91 @@
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
 
-<div style="padding: 10px; font-family: Arial, Helvetica, sans-serif;">
-  <label for="maxCollapse">Max chars for collapse: </label>
-  <input
-    type="number"
-    name="maxCollapse"
-    id="maxCollapse"
-    value="40"
-    onchange="action()"
-    step="10"
-    style="width: 40px; text-align: center;"
-  /><br />
-  <input type="checkbox" name="shouldIds" id="shouldIds" onchange="action()" />
-  <label id="shouldIdsLabel" for="shouldIds"
-    >Replace string ids with ObjectId</label
-  ><br />
-  <input
-    type="checkbox"
-    name="shouldDates"
-    id="shouldDates"
-    onchange="action()"
-  />
-  <label id="shouldDatesLabel" for="shouldDates"
-    >Replace string dates with Date</label
-  ><br />
-</div>
+<body>
+  <div
+    style="padding: 10px; font-family: Arial, Helvetica, sans-serif; height: 70px;"
+  >
+    <label for="maxCollapse">Max chars for collapse: </label>
+    <input
+      type="number"
+      name="maxCollapse"
+      id="maxCollapse"
+      value="40"
+      onchange="action()"
+      step="10"
+      style="width: 40px; text-align: center;"
+    /><br />
+    <input
+      type="checkbox"
+      name="shouldIds"
+      id="shouldIds"
+      onchange="action()"
+    />
+    <label id="shouldIdsLabel" for="shouldIds"
+      >Replace string ids with ObjectId</label
+    ><br />
+    <input
+      type="checkbox"
+      name="shouldDates"
+      id="shouldDates"
+      onchange="action()"
+    />
+    <label id="shouldDatesLabel" for="shouldDates"
+      >Replace string dates with Date</label
+    ><br />
+  </div>
 
-<div>
-  <textarea
-    name="input"
-    id="inputCode"
-    style="font-size: 15px; font-family: monaco; height: 100%; width: 30%; float: left;"
-    placeholder="Paste Mongoose query from DAL logs here"
-    oninput="action()"
-    spellcheck="false"
-  ></textarea>
-  <textarea
-    name="output"
-    id="outputCode"
-    style="font-size: 15px; font-family: monaco; height: 100%; width: 70%; float: right;"
-  ></textarea>
-</div>
+  <!-- 100vh - height of above - its padding from both sides - padding from bottom of I/O block -->
+  <div style="display: flex; height: calc(100vh - 70px - 20px - 10px);">
+    <textarea
+      name="input"
+      id="inputCode"
+      style="font-size: 15px; font-family: monaco; height: 100%; width: 29%; resize: horizontal; overflow: auto; margin-right: 1%;"
+      placeholder="Paste Mongoose query from DAL logs here"
+      oninput="action()"
+      spellcheck="false"
+    ></textarea>
+    <textarea
+      name="output"
+      id="outputCode"
+      style="font-size: 15px; font-family: monaco; height: 100%; width: 70%; resize: none;"
+    ></textarea>
+  </div>
+</body>
+
+<script>
+  (() => {
+    // Resize scripts
+    const input = document.getElementById("inputCode");
+    const output = document.getElementById("outputCode");
+
+    function resizeBoth() {
+      if (localStorage.inputWidth) {
+        input.style.width = Number(localStorage.inputWidth) + "%";
+        output.style.width = 100 - 1 - localStorage.inputWidth + "%";
+      }
+    }
+
+    resizeBoth();
+    window.onresize = resizeBoth;
+
+    const setWidth = () => {
+      if (localStorage.inputWidth) {
+        output.style.width = 100 - 1 - localStorage.inputWidth + "%";
+      }
+    };
+    function manageResizeManually() {
+      requestAnimationFrame(() => {
+        localStorage.inputWidth = Math.ceil(
+          (input.clientWidth / input.parentElement.clientWidth) * 100
+        );
+        setWidth();
+        manageResizeManually();
+      });
+    }
+
+    manageResizeManually();
+  })();
+</script>
 
 <script>
   const DEFAULT_MAX_COLLAPSE = 50;
