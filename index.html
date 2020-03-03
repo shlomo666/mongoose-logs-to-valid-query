@@ -141,8 +141,7 @@
 
     const exchanged = s
       .replace(
-        / \/[^\n]+\/[a-z]+/g,
-        s => ` "${exchange(s.slice(1), "Regexp")}"`
+        /\/[^\n]+\/[a-z]*/g,
       )
       .replace(/ (\w{24})/g, (s, id) => ` "${exchange(id, "ObjectId")}"`)
       .replace(
