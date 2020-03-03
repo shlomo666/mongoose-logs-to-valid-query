@@ -132,8 +132,9 @@
     arr = removeQuotes(arr);
     arr = collapse(arr, MAX_COLLAPSE);
 
+    // Don't use replace because $$ is special combo of replace and it's common in mongo scripts
     output.value =
-      (txt.startsWith("db.") ? "" : "db.") + txt.replace(originalArr, arr);
+      (txt.startsWith("db.") ? "" : "db.") + txt.split(originalArr).join(arr);
   }
 
   function format(txt) {
@@ -183,8 +184,8 @@
         }
         if (depthCounter === 0) {
           const partialString = txt.substring(i, j + 1);
-          txt = txt.replace(
-            partialString,
+          // Don't use replace because $$ is special combo of replace and it's common in mongo scripts
+          txt = txt.split(partialString).join(
             partialString
               .split("\n")
               .map(p => p.trim())
