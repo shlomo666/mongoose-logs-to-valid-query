@@ -122,6 +122,7 @@
     if (originalArr.length === 0) return (output.value = "");
 
     let arr = originalArr;
+    arr = replaceObjectIdAndDateWrappers(arr);
     if (shouldReplaceStringIds) {
       arr = replaceStringIds(arr);
     }
@@ -137,14 +138,23 @@
       (txt.startsWith("db.") ? "" : "db.") + txt.split(originalArr).join(arr);
   }
 
+  function replaceObjectIdAndDateWrappers(txt) {
+    return txt
+      .replace(/ObjectId\(['"](\w{24})['"]\)/g, (s, id) => id)
+      .replace(
+        /Date\(['"](\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z)['"]\)/g,
+        (s, date) => date
+      );
+  }
+
   function format(txt) {
     map.clear();
 
     const exchanged = txt
       .replace(/\/[^\n]+\/[a-z]*/g, s => `"${exchange(s, "Regexp")}"`)
-      .replace(/[^"](\w{24})/g, (s, id) => `"${exchange(id, "ObjectId")}"`)
+      .replace(/[^'"](\w{24})/g, (s, id) => `"${exchange(id, "ObjectId")}"`)
       .replace(
-        /[^"](\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z)/g,
+        /[^'"](\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z)/g,
         (s, date) => `"${exchange(date, "Date")}"`
       )
       .replace(/'|`/g, '"');
@@ -158,6 +168,17 @@
     return stringified.replace(/Regexp\("([^\n]+)"\)/g, (s, regex) => regex);
   }
 
+  function notInString(txt, s) {
+    return (
+      txt
+        .replace(/\\"/g, "")
+        .split('"')
+        .findIndex(part => part.includes(s)) %
+        2 ===
+      0
+    );
+  }
+
   const map = new Map();
   function exchange(s, prefix) {
     if (!map.has(s)) {
@@ -167,7 +188,7 @@
   }
 
   function removeQuotes(txt) {
-    return txt.replace(/"([\$\w]+)": /g, (_, s) => s + ": ");
+    return txt.replace(/['"]([\$\w]+)['"]: /g, (_, s) => s + ": ");
   }
 
   function collapse(txt, MAX_COLLAPSE) {
@@ -199,12 +220,12 @@
   }
 
   function replaceStringIds(txt) {
-    return txt.replace(/"\w{24}"/g, s => s.slice(1, -1));
+    return txt.replace(/['"]\w{24}['"]/g, s => s.slice(1, -1));
   }
 
   function replaceStringDates(txt) {
     return txt.replace(
-      /"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z"/g,
+      /['"]\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z['"]/g,
       s => s.slice(1, -1)
     );
   }
