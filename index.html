@@ -132,11 +132,13 @@
     localStorage.shouldDates = shouldReplaceStringDates;
     localStorage.maxCollapse = MAX_COLLAPSE;
 
+    /** @type {string} */
     const txt = input.value;
-    if (txt.includes("[Array]")) {
-      const from = txt.indexOf("[Array]");
-      highlight(from, from + "[Array]".length);
-      output.value = arrayErrorMessage;
+    const badQueryMatch = txt.match(/\[Array\]|\[Object\]/);
+    if (badQueryMatch) {
+      const from = badQueryMatch.index;
+      highlight(from, from + badQueryMatch[0].length);
+      output.value = badQueryErrorMessage(badQueryMatch[0]);
       return;
     }
     const originalArr = txt.substring(
@@ -283,7 +285,9 @@
     return txt.startsWith(start) ? txt.substring(start.length) : txt;
   }
 
-  const arrayErrorMessage = `Your query contains [Array]. Change DAL mongoose debug to use JSON.stringify instead of default
+  const badQueryErrorMessage = (
+    badString
+  ) => `Your query contains ${badString}. Change DAL mongoose debug to use JSON.stringify instead of default
 
 mongoose.set('debug', (coll, method, queryObj, optionsObj) => {
   const query = JSON.stringify(queryObj);
