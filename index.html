@@ -180,6 +180,10 @@
     map.clear();
 
     const exchanged = txt
+      .replace(
+        /"(\/(\\\\|\\"|[^"])+\/[a-z]*)"/g,
+        (s, regex) => `"${exchange(regex, "Regexp")}"`
+      )
       .replace(/\/[^\n]+\/[a-z]*/g, (s) => `"${exchange(s, "Regexp")}"`)
       .replace(
         /[^'"](\w{24})/g,
@@ -294,5 +298,9 @@ mongoose.set('debug', (coll, method, queryObj, optionsObj) => {
   const options = JSON.stringify(optionsObj || {});
 
   console.log(\`db.\${coll}.\${method}(\${query}, \${options});\`);
-});`;
+});
+(RegExp.prototype as any).toJSON = function() {
+  return this.toString();
+};
+`;
 </script>
