@@ -194,6 +194,16 @@
         (s, date) => `${s[0]}"${exchange(date, "ISODate")}"`
       )
       .replace(/'|`/g, '"');
+
+    try {
+      eval(exchanged);
+    } catch (e) {
+      output.value = exchanged;
+      const from = exchanged.indexOf(e.message.slice(-2, -1));
+      highlight(from, from + 1, output);
+      throw e;
+    }
+
     let stringified = JSON.stringify(eval(exchanged), null, 2);
     map.forEach(
       (v, k) =>
@@ -274,8 +284,7 @@
       replaceStringDates(txt) !== txt ? "gainsboro" : "none";
   }
 
-  function highlight(from, to) {
-    const textArea = input;
+  function highlight(from, to, textArea = input) {
     textArea.focus();
     const fullText = textArea.value;
     textArea.value = fullText.substring(0, to);
