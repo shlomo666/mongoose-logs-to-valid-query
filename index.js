@@ -1,12 +1,5 @@
 const DEFAULT_MAX_COLLAPSE = 50;
 
-document.getElementById('shouldIds').checked =
-  localStorage.shouldIds === 'true';
-document.getElementById('shouldDates').checked =
-  localStorage.shouldDates === 'true';
-document.getElementById('maxCollapse').value =
-  Number(localStorage.maxCollapse) || DEFAULT_MAX_COLLAPSE;
-
 const input = document.getElementById('inputCode');
 const output = document.getElementById('outputCode');
 
