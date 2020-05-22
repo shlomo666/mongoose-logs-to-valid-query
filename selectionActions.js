@@ -25,6 +25,26 @@
           } = getMatchingBlock(output.value, start, end, input.value);
 
           const json = eval(`p=${block}`);
+
+          if (
+            Object.values(json).length === 1 &&
+            Object.values(json)[0] === false
+          ) {
+            const start = inputStart + inputBlock.indexOf('false');
+            const end = start + 'false'.length - 1;
+            suggestions.push(changeFalseToNotTrue(start, end));
+          }
+
+          if (deepEqual(json, { $ne: true })) {
+            suggestions.push(changeNotTrueToFalse(inputStart, inputEnd));
+          }
+
+          if (deepEqual(json, { $ne: [] })) {
+            suggestions.push(
+              changeNotEmptyArrayToArrayAndNotEmpty(inputStart, inputEnd)
+            );
+          }
+
           const $lookup = json.$lookup;
           if ($lookup?.localField) {
             suggestions.push(alterLookupToPipeline(json, inputStart, inputEnd));
@@ -40,19 +60,15 @@
             suggestions.push(alterLookupToSimple(json, inputStart, inputEnd));
           }
           if ($lookup) {
-            try {
-              const nextJson = getNextJson(end, output.value);
-              if (
-                !nextJson?.$unwind &&
-                !JSON.stringify(nextJson).includes(
-                  `"$elementAt":["$${$lookup.as}"`
-                )
-              ) {
-                suggestions.push(addSingular(json, inputStart, inputEnd));
-                suggestions.push(attachUnwind(json, inputStart, inputEnd));
-              }
-            } catch (e) {
-              console.log(e);
+            const nextJson = getNextJson(end, output.value);
+            if (
+              !nextJson?.$unwind &&
+              !JSON.stringify(nextJson).includes(
+                `"$elementAt":["$${$lookup.as}"`
+              )
+            ) {
+              suggestions.push(addSingular(json, inputStart, inputEnd));
+              suggestions.push(attachUnwind(json, inputStart, inputEnd));
             }
           }
 
@@ -66,8 +82,7 @@
             }
 
             if (
-              JSON.stringify(json) ===
-              JSON.stringify({
+              deepEqual(json, {
                 $addFields: {
                   [lookupAs]: {
                     $elementAt: [`$${lookupAs}`, 0]
@@ -119,17 +134,63 @@
     };
   }
 
+  function replaceInputJson(start, end, ...jsonArr) {
+    input.value =
+      input.value.slice(0, start) +
+      jsonArr
+        .filter((p) => p !== '' && p !== null && p !== undefined)
+        .map((json) => JSON.stringify(json))
+        .join(',') +
+      input.value.slice(end + 1);
+  }
+
+  function appendInputJson(start, json) {
+    input.value =
+      input.value.slice(0, start) +
+      ',' +
+      JSON.stringify(json) +
+      input.value.slice(start);
+  }
+
+  function changeFalseToNotTrue(inputStart, inputEnd) {
+    return {
+      text: 'Change to { $ne: true }',
+      action: () => {
+        const ne = { $ne: true };
+        replaceInputJson(inputStart, inputEnd, ne);
+        action();
+      }
+    };
+  }
+
+  function changeNotTrueToFalse(inputStart, inputEnd) {
+    return {
+      text: 'Change to false',
+      action: () => {
+        const falseString = false;
+        replaceInputJson(inputStart, inputEnd, falseString);
+        action();
+      }
+    };
+  }
+
+  function changeNotEmptyArrayToArrayAndNotEmpty(inputStart, inputEnd) {
+    return {
+      text: 'Change not empty array to "array & not empty"',
+      action: () => {
+        const arrayAndNotEmpty = { $gt: [] };
+        replaceInputJson(inputStart, inputEnd, arrayAndNotEmpty);
+        action();
+      }
+    };
+  }
+
   function attachUnwind(json, start, end) {
     return {
       text: 'Attach $unwind',
       action: () => {
         const unwind = { $unwind: `$${json.$lookup.as}` };
-        input.value =
-          input.value.slice(0, end + 1) +
-          ',' +
-          JSON.stringify(unwind) +
-          input.value.slice(end + 1);
-
+        appendInputJson(end + 1, unwind);
         action();
       }
     };
@@ -144,12 +205,7 @@
             [json.$lookup.as]: { $elementAt: [`$${json.$lookup.as}`, 0] }
           }
         };
-        input.value =
-          input.value.slice(0, end + 1) +
-          ',' +
-          JSON.stringify(elementAt) +
-          input.value.slice(end + 1);
-
+        appendInputJson(end + 1, elementAt);
         action();
       }
     };
@@ -160,11 +216,7 @@
       text: 'Replace singular with $unwind (to get many)',
       action: () => {
         const unwind = { $unwind: `$${path}` };
-        input.value =
-          input.value.slice(0, start) +
-          JSON.stringify(unwind) +
-          input.value.slice(end + 1);
-
+        replaceInputJson(start, end, unwind);
         action();
       }
     };
@@ -180,11 +232,7 @@
             [path]: { $elementAt: [`$${path}`, 0] }
           }
         };
-        input.value =
-          input.value.slice(0, start) +
-          JSON.stringify(elementAt) +
-          input.value.slice(end + 1);
-
+        replaceInputJson(start, end, elementAt);
         action();
       }
     };
@@ -205,12 +253,7 @@
             as
           }
         };
-
-        input.value =
-          input.value.slice(0, start) +
-          JSON.stringify(newLookup) +
-          input.value.slice(end + 1);
-
+        replaceInputJson(start, end, newLookup);
         action();
       }
     };
@@ -268,13 +311,7 @@
             }
           };
         }
-
-        input.value =
-          input.value.slice(0, start) +
-          JSON.stringify(newLookup) +
-          (furtherMatch ? ',' + JSON.stringify(furtherMatch) : '') +
-          input.value.slice(end + 1);
-
+        replaceInputJson(start, end, newLookup, furtherMatch);
         action();
       }
     };
