@@ -3,12 +3,14 @@ const DEFAULT_MAX_COLLAPSE = 50;
 const input = document.getElementById('inputCode');
 const output = document.getElementById('outputCode');
 
-function action() {
-  window.history.pushState(
-    null,
-    document.title,
-    window.location.href.split('?')[0]
-  );
+function action(noPushState = false) {
+  if (!noPushState) {
+    window.history.pushState(
+      null,
+      document.title,
+      window.location.href.split('?')[0]
+    );
+  }
 
   markOptionsUsage();
 
@@ -54,11 +56,13 @@ function action() {
       .split(originalArr)
       .join(arr);
 
-  window.history.pushState(
-    null,
-    document.title,
-    window.location.href + '?query=' + btoa(input.value)
-  );
+  if (!noPushState) {
+    window.history.replaceState(
+      null,
+      document.title,
+      window.location.href + '?query=' + btoa(input.value)
+    );
+  }
 }
 
 function replaceObjectIdAndDateWrappers(txt) {
