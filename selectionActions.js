@@ -9,7 +9,11 @@
       let from = output.selectionStart + 1;
       let to = output.selectionEnd - 1;
 
-      while (suggestions.length === 0 && from > output.value.indexOf('[')) {
+      while (
+        suggestions.length === 0 &&
+        from > output.value.indexOf('[') &&
+        to < input.value.lastIndexOf(']')
+      ) {
         from--;
         to++;
         const { block, start, end } = getBlock(output.value, from, to);
@@ -24,7 +28,7 @@
             end: inputEnd
           } = getMatchingBlock(output.value, start, end, input.value);
 
-          const json = eval(`p=${block}`);
+          const json = evaluate(block);
 
           if (
             Object.values(json).length === 1 &&

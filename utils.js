@@ -103,7 +103,7 @@ function getPrevJson(start, text) {
 
   const { block } = getBlock(text, prevBlockEndIndex - 1, prevBlockEndIndex);
   try {
-    const prevJson = eval(`p=${block}`);
+    const prevJson = evaluate(block);
     return prevJson;
   } catch (err) {}
 }
@@ -118,7 +118,7 @@ function getNextJson(end, text) {
     nextBlockStartIndex + 1
   );
   try {
-    const nextJson = eval(`p=${block}`);
+    const nextJson = evaluate(block);
     return nextJson;
   } catch (err) {}
 }
