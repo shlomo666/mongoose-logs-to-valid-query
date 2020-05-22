@@ -2,6 +2,27 @@ String.prototype.filter = function (...args) {
   return this.split('').filter(...args);
 };
 
+const simpleTypes = new Set([
+  'string',
+  'number',
+  'boolean',
+  'bigint',
+  'undefined',
+  'function',
+  'symbol'
+]);
+function deepEqual(o1, o2) {
+  if (
+    [o1, o2].includes(null) ||
+    simpleTypes.has(typeof o1) ||
+    simpleTypes.has(typeof o2)
+  ) {
+    return o1 === o2;
+  }
+  // not null object or array
+  return Object.entries(o1).every(([k, v]) => deepEqual(o2[k], v));
+}
+
 const getBlock = (text, start, end) => {
   let a = start;
   let b = end;
