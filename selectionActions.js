@@ -1,122 +1,123 @@
-(() => {
+const getSuggestions = (() => {
   const output = document.getElementById('outputCode');
   const suggestionsMenu = document.getElementById('suggestionsMenu');
 
   output.oncontextmenu = function (ev) {
-    const suggestions = [];
-
     if (ev.button === 2) {
-      let from = output.selectionStart + 1;
-      let to = output.selectionEnd - 1;
+      const from = output.selectionStart + 1;
+      const to = output.selectionEnd - 1;
 
-      while (
-        suggestions.length === 0 &&
-        from > output.value.indexOf('[') &&
-        to < input.value.lastIndexOf(']')
-      ) {
-        from--;
-        to++;
-        const { block, start, end } = getBlock(output.value, from, to);
+      const { suggestions, start, end } = getSuggestions(from, to);
+      if (suggestions.length) {
+        suggestionsMenu.hidden = false;
+        setSuggestionsMenuHTML(suggestions);
+        suggestionsMenu.style.top = ev.y;
+        suggestionsMenu.style.left = ev.x;
+        ev.preventDefault();
 
-        from = start;
-        to = end;
-
-        try {
-          const {
-            block: inputBlock,
-            start: inputStart,
-            end: inputEnd
-          } = getMatchingBlock(output.value, start, end, input.value);
-
-          const json = evaluate(block);
-
-          if (
-            Object.values(json).length === 1 &&
-            Object.values(json)[0] === false
-          ) {
-            const start = inputStart + inputBlock.indexOf('false');
-            const end = start + 'false'.length - 1;
-            suggestions.push(changeFalseToNotTrue(start, end));
-          }
-
-          if (deepEqual(json, { $ne: true })) {
-            suggestions.push(changeNotTrueToFalse(inputStart, inputEnd));
-          }
-
-          if (deepEqual(json, { $ne: [] })) {
-            suggestions.push(
-              changeNotEmptyArrayToArrayAndNotEmpty(inputStart, inputEnd)
-            );
-          }
-
-          const $lookup = json.$lookup;
-          if ($lookup?.localField) {
-            suggestions.push(alterLookupToPipeline(json, inputStart, inputEnd));
-          }
-          if (
-            /^\$[^\$]/.test($lookup?.pipeline?.[0]?.$match?.$expr?.$eq?.[0]) &&
-            $lookup?.let?.[
-              $lookup?.pipeline?.[0]?.$match?.$expr?.$eq?.[1]
-                ?.split?.('$$')
-                .pop()
-            ]
-          ) {
-            suggestions.push(alterLookupToSimple(json, inputStart, inputEnd));
-          }
-          if ($lookup) {
-            const nextJson = getNextJson(end, output.value);
-            if (
-              !nextJson?.$unwind &&
-              !JSON.stringify(nextJson).includes(
-                `"$elementAt":["$${$lookup.as}"`
-              )
-            ) {
-              suggestions.push(addSingular(json, inputStart, inputEnd));
-              suggestions.push(attachUnwind(json, inputStart, inputEnd));
-            }
-          }
-
-          const prevJson = getPrevJson(start, output.value);
-          const lookupAs = prevJson?.$lookup?.as;
-          if (lookupAs) {
-            if (json?.$unwind && json?.$unwind?.slice?.(1) === lookupAs) {
-              suggestions.push(
-                replaceUnwindWithSingular(lookupAs, inputStart, inputEnd)
-              );
-            }
-
-            if (
-              deepEqual(json, {
-                $addFields: {
-                  [lookupAs]: {
-                    $elementAt: [`$${lookupAs}`, 0]
-                  }
-                }
-              })
-            ) {
-              suggestions.push(
-                replaceSingularWithUnwind(lookupAs, inputStart, inputEnd)
-              );
-            }
-          }
-        } catch (err) {
-          console.log(err);
-        }
-
-        if (suggestions.length) {
-          suggestionsMenu.hidden = false;
-          setSuggestionsMenuHTML(suggestions);
-          suggestionsMenu.style.top = ev.y;
-          suggestionsMenu.style.left = ev.x;
-          ev.preventDefault();
-
-          output.setSelectionRange(start, end + 1);
-        } else {
-          suggestionsMenu.hidden = true;
-        }
+        output.setSelectionRange(start, end + 1);
+      } else {
+        suggestionsMenu.hidden = true;
       }
     }
   };
+
+  function getSuggestions(from, to) {
+    const suggestions = [];
+    let block, start, end;
+
+    while (
+      suggestions.length === 0 &&
+      from > output.value.indexOf('[') &&
+      to < input.value.lastIndexOf(']')
+    ) {
+      ({ block, start, end } = getBlock(output.value, from, to));
+
+      from = start;
+      to = end;
+      from--;
+      to++;
+
+      try {
+        const {
+          block: inputBlock,
+          start: inputStart,
+          end: inputEnd
+        } = getMatchingBlock(output.value, start, end, input.value);
+
+        const json = evaluate(block);
+
+        if (
+          Object.values(json).length === 1 &&
+          Object.values(json)[0] === false
+        ) {
+          const start = inputStart + inputBlock.indexOf('false');
+          const end = start + 'false'.length - 1;
+          suggestions.push(changeFalseToNotTrue(start, end));
+        }
+
+        if (deepEqual(json, { $ne: true })) {
+          suggestions.push(changeNotTrueToFalse(inputStart, inputEnd));
+        }
+
+        if (deepEqual(json, { $ne: [] })) {
+          suggestions.push(
+            changeNotEmptyArrayToArrayAndNotEmpty(inputStart, inputEnd)
+          );
+        }
+
+        const $lookup = json.$lookup;
+        if ($lookup?.localField) {
+          suggestions.push(alterLookupToPipeline(json, inputStart, inputEnd));
+        }
+        if (
+          /^\$[^\$]/.test($lookup?.pipeline?.[0]?.$match?.$expr?.$eq?.[0]) &&
+          $lookup?.let?.[
+            $lookup?.pipeline?.[0]?.$match?.$expr?.$eq?.[1]?.split?.('$$').pop()
+          ]
+        ) {
+          suggestions.push(alterLookupToSimple(json, inputStart, inputEnd));
+        }
+        if ($lookup) {
+          const nextJson = getNextJson(end, output.value);
+          if (
+            !nextJson?.$unwind &&
+            !JSON.stringify(nextJson).includes(`"$elementAt":["$${$lookup.as}"`)
+          ) {
+            suggestions.push(addSingular(json, inputStart, inputEnd));
+            suggestions.push(attachUnwind(json, inputStart, inputEnd));
+          }
+        }
+
+        const prevJson = getPrevJson(start, output.value);
+        const lookupAs = prevJson?.$lookup?.as;
+        if (lookupAs) {
+          if (json?.$unwind && json?.$unwind?.slice?.(1) === lookupAs) {
+            suggestions.push(
+              replaceUnwindWithSingular(lookupAs, inputStart, inputEnd)
+            );
+          }
+
+          if (
+            deepEqual(json, {
+              $addFields: {
+                [lookupAs]: {
+                  $elementAt: [`$${lookupAs}`, 0]
+                }
+              }
+            })
+          ) {
+            suggestions.push(
+              replaceSingularWithUnwind(lookupAs, inputStart, inputEnd)
+            );
+          }
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    return { suggestions, block, start, end };
+  }
 
   function setSuggestionsMenuHTML(suggestions) {
     suggestionsMenu.innerHTML = `${suggestions
@@ -130,6 +131,10 @@
           suggestionsMenu.hidden = true;
           output.onclick = null;
           p.action();
+          action();
+          setTimeout(() => {
+            output.focus();
+          }, 100);
         })
     );
 
@@ -138,31 +143,12 @@
     };
   }
 
-  function replaceInputJson(start, end, ...jsonArr) {
-    input.value =
-      input.value.slice(0, start) +
-      jsonArr
-        .filter((p) => p !== '' && p !== null && p !== undefined)
-        .map((json) => JSON.stringify(json))
-        .join(',') +
-      input.value.slice(end + 1);
-  }
-
-  function appendInputJson(start, json) {
-    input.value =
-      input.value.slice(0, start) +
-      ',' +
-      JSON.stringify(json) +
-      input.value.slice(start);
-  }
-
   function changeFalseToNotTrue(inputStart, inputEnd) {
     return {
       text: 'Change to { $ne: true }',
       action: () => {
         const ne = { $ne: true };
         replaceInputJson(inputStart, inputEnd, ne);
-        action();
       }
     };
   }
@@ -173,7 +159,6 @@
       action: () => {
         const falseString = false;
         replaceInputJson(inputStart, inputEnd, falseString);
-        action();
       }
     };
   }
@@ -184,7 +169,6 @@
       action: () => {
         const arrayAndNotEmpty = { $gt: [] };
         replaceInputJson(inputStart, inputEnd, arrayAndNotEmpty);
-        action();
       }
     };
   }
@@ -195,7 +179,6 @@
       action: () => {
         const unwind = { $unwind: `$${json.$lookup.as}` };
         appendInputJson(end + 1, unwind);
-        action();
       }
     };
   }
@@ -210,7 +193,6 @@
           }
         };
         appendInputJson(end + 1, elementAt);
-        action();
       }
     };
   }
@@ -221,7 +203,6 @@
       action: () => {
         const unwind = { $unwind: `$${path}` };
         replaceInputJson(start, end, unwind);
-        action();
       }
     };
   }
@@ -237,7 +218,6 @@
           }
         };
         replaceInputJson(start, end, elementAt);
-        action();
       }
     };
   }
@@ -258,7 +238,6 @@
           }
         };
         replaceInputJson(start, end, newLookup);
-        action();
       }
     };
   }
@@ -316,8 +295,9 @@
           };
         }
         replaceInputJson(start, end, newLookup, furtherMatch);
-        action();
       }
     };
   }
+
+  return getSuggestions;
 })();

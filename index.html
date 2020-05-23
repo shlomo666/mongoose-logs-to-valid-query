@@ -17,6 +17,12 @@
       background-color: gray;
     }
   </style>
+  <style id="redSelection">
+    textarea::selection {
+      color: white;
+      background: red;
+    }
+  </style>
 </head>
 <body>
   <div
@@ -82,13 +88,7 @@
     <textarea
       name="output"
       id="outputCode"
-      style="
-        font-size: 15px;
-        font-family: monaco;
-        height: 100%;
-        width: 70%;
-        resize: none;
-      "
+      style="font: 15px monaco; height: 100%; width: 70%; resize: none;"
     ></textarea>
   </div>
 </body>
@@ -101,3 +101,4 @@
 <script src="utils.js"></script>
 <script src="eval.js"></script>
 <script src="moveCode.js"></script>
+<script src="highlightOnOverCode.js"></script>

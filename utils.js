@@ -20,7 +20,34 @@ function deepEqual(o1, o2) {
     return o1 === o2;
   }
   // not null object or array
-  return Object.entries(o1).every(([k, v]) => deepEqual(o2[k], v));
+  return (
+    typeof o1 === typeof o2 &&
+    Object.entries(o1).length === Object.entries(o2).length &&
+    Object.entries(o1).every(([k, v]) => deepEqual(o2[k], v))
+  );
+}
+
+/** @param {string} text */
+function scopes(text) {
+  return text.split(/\{|\[/).length - text.split(/\}|\]/).length;
+}
+
+function replaceInputJson(start, end, ...jsonArr) {
+  input.value =
+    input.value.slice(0, start) +
+    jsonArr
+      .filter((p) => p !== '' && p !== null && p !== undefined)
+      .map((json) => JSON.stringify(json))
+      .join(',') +
+    input.value.slice(end + 1);
+}
+
+function appendInputJson(start, json) {
+  input.value =
+    input.value.slice(0, start) +
+    ',' +
+    JSON.stringify(json) +
+    input.value.slice(start);
 }
 
 const getBlock = (text, start, end) => {
@@ -97,26 +124,52 @@ const getMatchingBlock = (text, start, end, textToMatchIn) => {
   );
 };
 
-function getPrevJson(start, text) {
-  const prevBlockEndIndex = text.slice(0, start).lastIndexOf('}');
+function getPrevBlock(from, text) {
+  const prevBlockEndIndex = text.slice(0, from).lastIndexOf('}');
   if (prevBlockEndIndex === -1) return null;
 
-  const { block } = getBlock(text, prevBlockEndIndex - 1, prevBlockEndIndex);
+  const { block, start, end } = getBlock(
+    text,
+    prevBlockEndIndex - 1,
+    prevBlockEndIndex
+  );
+  if (from < end) {
+    return null;
+  }
+  return { block, start, end };
+}
+
+function getPrevJson(start, text) {
+  const prevBlock = getPrevBlock(start, text);
+  if (!prevBlock) return prevBlock;
+  const { block, start: prevStart, end: prevEnd } = prevBlock;
+
   try {
     const prevJson = evaluate(block);
     return prevJson;
   } catch (err) {}
 }
 
-function getNextJson(end, text) {
-  const nextBlockStartIndex = end + text.slice(end).indexOf('{');
+function getNextBlock(to, text) {
+  const nextBlockStartIndex = to + text.slice(to).indexOf('{');
   if (nextBlockStartIndex === -1) return null;
 
-  const { block } = getBlock(
+  const { block, start, end } = getBlock(
     text,
     nextBlockStartIndex,
     nextBlockStartIndex + 1
   );
+  if (to > start) {
+    return null;
+  }
+  return { block, start, end };
+}
+
+function getNextJson(end, text) {
+  const prevBlock = getNextBlock(end, text);
+  if (!prevBlock) return prevBlock;
+  const { block, start: prevStart, end: prevEnd } = prevBlock;
+
   try {
     const nextJson = evaluate(block);
     return nextJson;

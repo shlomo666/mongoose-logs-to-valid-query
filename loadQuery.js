@@ -4,6 +4,13 @@ const setFromQuery = () => {
   setTimeout(() => {
     document.getElementById('inputCode').value = query;
     action(true);
+    setTimeout(() => {
+      if (query) {
+        document.getElementById('outputCode').focus();
+      } else {
+        document.getElementById('inputCode').focus();
+      }
+    }, 10);
   }, 10);
 };
 
