@@ -7,18 +7,35 @@
     return metrics.width;
   }
 
+  window.onresize = () => setLineHeightInOutputBox();
+  let lineHeight;
+  setLineHeightInOutputBox();
+  function setLineHeightInOutputBox() {
+    const tempValue = output.value;
+    output.value = '\n'.repeat(1000 - 1);
+    lineHeight = output.scrollHeight / 1000;
+    output.value = tempValue;
+  }
+
+  let mouseIsDown = false;
+  output.onmousedown = () => (mouseIsDown = true);
+  output.onmouseup = () => (mouseIsDown = false);
+
   let mouseOverSelection = false;
   output.onmousemove = (ev) => {
     if (mouseOverSelection) {
       mouseOverSelection = false;
       output.setSelectionRange(0, 0);
     }
+    if (mouseIsDown || output.selectionEnd - output.selectionStart > 1) {
+      return;
+    }
+
     const { offsetX, offsetY } = ev;
     const lines = output.value.split('\n');
-    const lineHight = output.scrollHeight / lines.length;
     const [x, y] = [offsetX, offsetY + output.scrollTop];
-    const line = parseInt(y / lineHight);
-    if (line < 0 || line > lines.length) {
+    const line = parseInt(y / lineHeight);
+    if (line < 0 || line >= lines.length) {
       return;
     }
     const lineText = lines[line];

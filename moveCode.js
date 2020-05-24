@@ -70,14 +70,15 @@ redSelection.disabled = true;
           secondSelection.start,
           output.value
         );
-        redSelection.disabled = false;
-        output.setSelectionRange(firstSelection.start, firstSelection.end);
+        // redSelection.disabled = false;
+        // highlight(firstSelection.start, firstSelection.end, output);
+        // output.setSelectionRange(firstSelection.start, firstSelection.end);
         setTimeout(() => {
-          redSelection.disabled = true;
-          output.setSelectionRange(secondSelection.start, secondSelection.end);
+          // redSelection.disabled = true;
+          highlight(secondSelection.start, secondSelection.end, output);
         }, 150);
         setTimeout(() => {
-          output.setSelectionRange(whereToPutTheCursor, whereToPutTheCursor);
+          highlight(whereToPutTheCursor, whereToPutTheCursor, output);
         }, 300);
       }, 100);
       action();
@@ -129,14 +130,14 @@ redSelection.disabled = true;
           whereToPutTheCursor
         );
         const firstSelection = getNextBlock(secondSelection.end, output.value);
-        redSelection.disabled = false;
-        output.setSelectionRange(firstSelection.start, firstSelection.end);
+        // redSelection.disabled = false;
+        // output.setSelectionRange(firstSelection.start, firstSelection.end);
         setTimeout(() => {
-          redSelection.disabled = true;
-          output.setSelectionRange(secondSelection.start, secondSelection.end);
+          // redSelection.disabled = true;
+          highlight(secondSelection.start, secondSelection.end, output);
         }, 100);
         setTimeout(() => {
-          output.setSelectionRange(whereToPutTheCursor, whereToPutTheCursor);
+          highlight(whereToPutTheCursor, whereToPutTheCursor, output);
         }, 200);
       }, 100);
       action();

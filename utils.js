@@ -54,35 +54,61 @@ const getBlock = (text, start, end) => {
   let a = start;
   let b = end;
 
-  while (text[a] !== '{' && text[a] !== '[') a--;
-  while (text[b] !== '}' && text[b] !== ']') b++;
+  const min = text.indexOf('[');
+  const max = text.lastIndexOf(']');
+  if (a < min || b > max) return null;
 
+  while (text[a] !== '{' && text[a] !== '[' && a >= min) a--;
+  while (text[b] !== '}' && text[b] !== ']' && b <= max) b++;
+
+  let safeExitCounter = 0;
   let isBlock = true;
   do {
+    if (++safeExitCounter === 1e5) {
+      debugger;
+      throw new Error('endless loop detected');
+    }
+
     while (
       text.slice(a, b + 1).filter((p) => p === '{').length <
       text.slice(a, b + 1).filter((p) => p === '}').length
     ) {
-      while (text[--a] !== '{');
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
+      }
+      while (text[--a] !== '{' && a >= min);
     }
     while (
       text.slice(a, b + 1).filter((p) => p === '{').length >
       text.slice(a, b + 1).filter((p) => p === '}').length
     ) {
-      while (text[++b] !== '}');
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
+      }
+      while (text[++b] !== '}' && b <= max);
     }
 
     while (
       text.slice(a, b + 1).filter((p) => p === '[').length <
       text.slice(a, b + 1).filter((p) => p === ']').length
     ) {
-      while (text[--a] !== '[');
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
+      }
+      while (text[--a] !== '[' && a >= min);
     }
     while (
       text.slice(a, b + 1).filter((p) => p === '[').length >
       text.slice(a, b + 1).filter((p) => p === ']').length
     ) {
-      while (text[++b] !== ']');
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
+      }
+      while (text[++b] !== ']' && b <= max);
     }
 
     isBlock = true;
@@ -92,8 +118,12 @@ const getBlock = (text, start, end) => {
       const [cOpen, cClose] = Object.values(counters);
       if (cOpen === cClose) {
         isBlock = false;
-        a--;
-        b++;
+        if (a > min) a--;
+        if (b < max) b++;
+      }
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
       }
     }
   } while (!isBlock);
@@ -174,4 +204,18 @@ function getNextJson(end, text) {
     const nextJson = evaluate(block);
     return nextJson;
   } catch (err) {}
+}
+
+function memoize(fn, millisec) {
+  let memoizeMap = new Map();
+  return (...args) => {
+    let { time, value } = memoizeMap.get(JSON.stringify(args)) || {};
+    if (time && performance.now() - time < millisec) {
+      return value;
+    }
+    value = fn(...args);
+    time = performance.now();
+    memoizeMap.set(JSON.stringify(args), { time, value });
+    return value;
+  };
 }

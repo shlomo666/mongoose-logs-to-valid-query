@@ -26,11 +26,16 @@ const getSuggestions = (() => {
     const suggestions = [];
     let block, start, end;
 
+    let safeExitCounter = 0;
     while (
       suggestions.length === 0 &&
       from > output.value.indexOf('[') &&
       to < input.value.lastIndexOf(']')
     ) {
+      if (++safeExitCounter === 1e5) {
+        debugger;
+        throw new Error('endless loop detected');
+      }
       ({ block, start, end } = getBlock(output.value, from, to));
 
       from = start;
