@@ -87,7 +87,9 @@ const getSuggestions = (() => {
           const nextJson = getNextJson(end, output.value);
           if (
             !nextJson?.$unwind &&
-            !JSON.stringify(nextJson).includes(`"$elementAt":["$${$lookup.as}"`)
+            !JSON.stringify(nextJson).includes(
+              `"$arrayElemAt":["$${$lookup.as}"`
+            )
           ) {
             suggestions.push(addSingular(json, inputStart, inputEnd));
             suggestions.push(attachUnwind(json, inputStart, inputEnd));
@@ -107,7 +109,7 @@ const getSuggestions = (() => {
             deepEqual(json, {
               $addFields: {
                 [lookupAs]: {
-                  $elementAt: [`$${lookupAs}`, 0]
+                  $arrayElemAt: [`$${lookupAs}`, 0]
                 }
               }
             })
@@ -190,14 +192,14 @@ const getSuggestions = (() => {
 
   function addSingular(json, start, end) {
     return {
-      text: 'Attach $elementAt 0 to make result single',
+      text: 'Attach $arrayElemAt 0 to make result single',
       action: () => {
-        const elementAt = {
+        const arrayElemAt = {
           $addFields: {
-            [json.$lookup.as]: { $elementAt: [`$${json.$lookup.as}`, 0] }
+            [json.$lookup.as]: { $arrayElemAt: [`$${json.$lookup.as}`, 0] }
           }
         };
-        appendInputJson(end + 1, elementAt);
+        appendInputJson(end + 1, arrayElemAt);
       }
     };
   }
@@ -215,14 +217,14 @@ const getSuggestions = (() => {
   function replaceUnwindWithSingular(path, start, end) {
     return {
       text:
-        'Replace $unwind with $elementAt 0 (Do this only if single return value is expected)',
+        'Replace $unwind with $arrayElemAt 0 (Do this only if single return value is expected)',
       action: () => {
-        const elementAt = {
+        const arrayElemAt = {
           $addFields: {
-            [path]: { $elementAt: [`$${path}`, 0] }
+            [path]: { $arrayElemAt: [`$${path}`, 0] }
           }
         };
-        replaceInputJson(start, end, elementAt);
+        replaceInputJson(start, end, arrayElemAt);
       }
     };
   }
