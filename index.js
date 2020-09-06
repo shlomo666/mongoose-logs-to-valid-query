@@ -67,7 +67,7 @@ function action(noPushState = false) {
 
 function replaceObjectIdAndDateWrappers(txt) {
   return txt
-    .replace(/ObjectId\(['"](\w{24})['"]\)/g, (s, id) => id)
+    .replace(/ObjectId\(['"]([a-z0-9]{24})['"]\)/g, (s, id) => id)
     .replace(
       /ISODate\(['"](\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{1,3})?Z)['"]\)/g,
       (s, date) => date
@@ -84,7 +84,7 @@ function format(txt) {
     )
     .replace(/\/[^\n]+\/[a-z]*/g, (s) => `"${exchange(s, 'Regexp')}"`)
     .replace(
-      /[^'"\.\w](\w{24})/g,
+      /[^'"\.\w]([a-z0-9]{24})/g,
       (s, id) => `${s[0]}"${exchange(id, 'ObjectId')}"`
     )
     .replace(
@@ -164,7 +164,7 @@ function collapse(txt, MAX_COLLAPSE) {
 }
 
 function replaceStringIds(txt) {
-  return txt.replace(/['"]\w{24}['"]/g, (s) => s.slice(1, -1));
+  return txt.replace(/['"][a-z0-9]{24}['"]/g, (s) => s.slice(1, -1));
 }
 
 function replaceStringDates(txt) {
