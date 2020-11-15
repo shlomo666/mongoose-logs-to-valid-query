@@ -16,6 +16,12 @@
       color: white;
       background-color: gray;
     }
+    code:focus {
+     outline: none;
+    }
+    pre {
+      white-space: nowrap;
+    }
   </style>
   <style id="redSelection">
     textarea::selection {
@@ -24,7 +30,7 @@
     }
   </style>
 </head>
-<body>
+<body style="background-color: black; color: #d4d4d4;">
   <div
     id="suggestionsMenu"
     hidden="hidden"
@@ -80,18 +86,71 @@
         resize: horizontal;
         overflow: auto;
         margin-right: 1%;
+        background-color: #1e1e1e;
+        color: #d4d4d4;
       "
       placeholder="Paste Mongoose query from DAL logs here"
       oninput="action()"
       spellcheck="false"
     ></textarea>
-    <textarea
+    <section><pre
+      style="
+        border: solid 1px #767676;
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+        font: 15px monaco;
+        height: 100%;
+        width: 70%;
+        overflow: scroll;
+        margin: 0;
+      "
+    >
+    <code
+      style="padding: 1px 0px; overflow-wrap: unset; -webkit-line-break: unset;"
+      contentEditable
       name="output"
       id="outputCode"
-      style="font: 15px monaco; height: 100%; width: 70%; resize: none;"
-    ></textarea>
+    ></code></section>
+  </pre>
   </div>
 </body>
+
+<script>
+  setTimeout(() => {
+    const outputCode = document.getElementById('outputCode');
+    // outputCode.innerText = String(`db.pagefollowers.aggregate([
+    outputCode.innerHTML = spanStrings(`db.pagefollowers.aggregate([
+    { $match: { pageId: ObjectId("5a13f48216c53300124e2e2c") } },
+    {
+      $lookup: {
+        from: "users",
+        let: { followerId: "userId" },
+        pipeline: [
+          {
+            $match: {
+              $and: [
+                { $expr: { $eq: [ "$_id", "$$followerId" ] } },
+                {
+                  $or: [ { "profile.first": /asaf/i }, { 'profile.last': /asaf/i }, { email: /asaf/i } ]
+                }
+              ]
+            }
+          },
+          { $project: { _id: 1 } }
+        ],
+        as: "users"
+      }
+    },
+    { $match: { users: { $gt: [] } } },
+    { $match: { userId: { $nin: [ ObjectId("5bcc3d58cc368e001187da5c") ] } } },
+    { $sort: { createdAt: -1 } },
+    { $project: { _id: "$userId" } },
+    { $facet: { data: [ { $skip: 0 }, { $limit: 15 } ], totalCount: [ { $count: "count" } ] } },
+    { $addFields: { tc: { $arrayElemAt: [ "$totalCount", 0 ] } } },
+    { $project: { data: "$data", totalCount: "$tc.count" } }
+  ], { allowDiskUse: true });`);
+  }, 100);
+</script>
 
 <script src="loadQuery.js"></script>
 <script src="resizeManager.js"></script>
@@ -101,4 +160,5 @@
 <script src="utils.js"></script>
 <script src="eval.js"></script>
 <script src="moveCode.js"></script>
-<script src="highlightOnOverCode.js"></script>
+<!-- <script src="highlightOnOverCode.js"></script> -->
+<script src="colorize.js"></script>

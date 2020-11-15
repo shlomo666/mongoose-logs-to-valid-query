@@ -177,9 +177,9 @@ function replaceStringDates(txt) {
 function markOptionsUsage() {
   const txt = input.value;
   document.getElementById('shouldIdsLabel').style.background =
-    replaceStringIds(txt) !== txt ? 'gainsboro' : 'none';
+    replaceStringIds(txt) !== txt ? '#9a1717' : 'none';
   document.getElementById('shouldDatesLabel').style.background =
-    replaceStringDates(txt) !== txt ? 'gainsboro' : 'none';
+    replaceStringDates(txt) !== txt ? '#9a1717' : 'none';
 }
 
 function highlight(from, to, textArea = input) {
