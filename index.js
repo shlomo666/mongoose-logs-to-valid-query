@@ -50,11 +50,14 @@ function action(noPushState = false) {
   arr = collapse(arr, MAX_COLLAPSE);
 
   // Don't use replace because $$ is special combo of replace and it's common in mongo scripts
-  output.value =
+  let value =
     'db.' +
     removeFromStart(removeFromStart(txt, 'Mongoose: '), 'db.')
       .split(originalArr)
       .join(arr);
+
+  value = replaceMongooseFindActionsWithChainOfActions(value);
+  output.value = value;
 
   if (!noPushState) {
     window.history.replaceState(
